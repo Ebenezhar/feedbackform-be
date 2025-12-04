@@ -10,10 +10,13 @@ class FeedBackView(APIView):
         page_size = int(request.GET.get("page_size", 10))
 
         # Step 2: Query your data
-        records = Feedback.objects.values()
+        records = Feedback.objects.all().order_by('-created_at').values(
+                'id', 'name', 'email', 'feedback', 'rating', 'created_at'
+            )
+        formatted = [self.format_feedback(item) for item in records]
 
         # Step 3: Apply pagination
-        paginator = Paginator(records, page_size)
+        paginator = Paginator(formatted, page_size)
         page_obj = paginator.get_page(page)
 
         # Step 4: Prepare JSON response
@@ -30,3 +33,10 @@ class FeedBackView(APIView):
     def post(self,request):
         print(request)
         return JsonResponse({'message':"Successfully created"},status =200)
+    
+
+    def format_feedback(self,item):
+        return {
+            **item,
+            "created_at": item['created_at'].strftime("%d-%m-%Y")
+        }
