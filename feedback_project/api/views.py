@@ -30,10 +30,28 @@ class FeedBackView(APIView):
                 "has_previous": page_obj.has_previous(),
             }
         }, status=200)
-    def post(self,request):
-        print(request)
-        return JsonResponse({'message':"Successfully created"},status =200)
     
+
+    def post(self,request):
+        input_data = request.data
+        try:
+            record,created = Feedback.objects.get_or_create(
+                email=input_data['email'], 
+                defaults={
+                    'name': input_data['name'],
+                    'email': input_data['email'],
+                    'rating': input_data['rating'] or 0,
+                    'feedback':input_data['feedback'] or ""
+                }
+            )
+            if created:
+                # print(f"✅ New user record created for: {record.email}")
+                return JsonResponse({'message':"Feedback recorded successfully.","record_id" :record.id},status =200)
+            else:
+                return JsonResponse({'message':"Feedback submitted already from this email.","record_id" :record.id},status =400)
+    
+        except Exception as e:
+            return JsonResponse({'message':str(e)},status = 400)
 
     def format_feedback(self,item):
         return {
